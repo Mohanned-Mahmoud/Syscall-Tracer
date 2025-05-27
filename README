@@ -1,51 +1,108 @@
-NOTE: we have stopped maintaining the x86 version of xv6, and switched
-our efforts to the RISC-V version
-(https://github.com/mit-pdos/xv6-riscv.git)
+# xv6 System Call Tracer (strace-like)
 
-xv6 is a re-implementation of Dennis Ritchie's and Ken Thompson's Unix
-Version 6 (v6).  xv6 loosely follows the structure and style of v6,
-but is implemented for a modern x86-based multiprocessor using ANSI C.
+## Overview
 
-ACKNOWLEDGMENTS
+This project extends the xv6 operating system by implementing a **system call tracer** similar to the Unix `strace` tool. The tracer logs all system calls made by processes, including the syscall name, arguments, and return values, enabling detailed monitoring and debugging of process behavior at the system call level.
 
-xv6 is inspired by John Lions's Commentary on UNIX 6th Edition (Peer
-to Peer Communications; ISBN: 1-57398-013-7; 1st edition (June 14,
-2000)). See also https://pdos.csail.mit.edu/6.828/, which
-provides pointers to on-line resources for v6.
+---
 
-xv6 borrows code from the following sources:
-    JOS (asm.h, elf.h, mmu.h, bootasm.S, ide.c, console.c, and others)
-    Plan 9 (entryother.S, mp.h, mp.c, lapic.c)
-    FreeBSD (ioapic.c)
-    NetBSD (console.c)
+## Features
 
-The following people have made contributions: Russ Cox (context switching,
-locking), Cliff Frey (MP), Xiao Yu (MP), Nickolai Zeldovich, and Austin
-Clements.
+- **Per-process syscall tracing:** Enable or disable syscall tracing on a per-process basis.
+- **Detailed syscall logging:** Logs syscall name, process ID, process name, and return value.
+- **Supports tracing child processes:** Optionally trace syscalls made by child processes created via `fork()`.
+- **User-level trace control program:** A built-in user program (`trace`) to test and demonstrate tracing functionality.
+- **Shell command integration:** Added `trace` and `untrace` commands in the shell to toggle tracing on and off.
 
-We are also grateful for the bug reports and patches contributed by Silas
-Boyd-Wickizer, Anton Burtsev, Cody Cutler, Mike CAT, Tej Chajed, eyalz800,
-Nelson Elhage, Saar Ettinger, Alice Ferrazzi, Nathaniel Filardo, Peter
-Froehlich, Yakir Goaron,Shivam Handa, Bryan Henry, Jim Huang, Alexander
-Kapshuk, Anders Kaseorg, kehao95, Wolfgang Keller, Eddie Kohler, Austin
-Liew, Imbar Marinescu, Yandong Mao, Matan Shabtay, Hitoshi Mitake, Carmi
-Merimovich, Mark Morrissey, mtasm, Joel Nider, Greg Price, Ayan Shafqat,
-Eldar Sehayek, Yongming Shen, Cam Tenny, tyfkda, Rafael Ubal, Warren
-Toomey, Stephen Tu, Pablo Ventura, Xi Wang, Keiichi Watanabe, Nicolas
-Wolovick, wxdao, Grant Wu, Jindong Zhang, Icenowy Zheng, and Zou Chang Wei.
+---
 
-The code in the files that constitute xv6 is
-Copyright 2006-2018 Frans Kaashoek, Robert Morris, and Russ Cox.
+## Implementation Details
 
-ERROR REPORTS
+### Kernel Modifications
 
-We don't process error reports (see note on top of this file).
+- **Process Structure (`proc.h`):**  
+  Added a `traced` flag in the process control block to indicate if tracing is enabled for that process.
 
-BUILDING AND RUNNING XV6
+- **New System Call `trace` (`syscall.h`, `syscall.c`, `defs.h`):**  
+  Introduced a new syscall to enable or disable tracing for the current process.
 
-To build xv6 on an x86 ELF machine (like Linux or FreeBSD), run
-"make". On non-x86 or non-ELF machines (like OS X, even on x86), you
-will need to install a cross-compiler gcc suite capable of producing
-x86 ELF binaries (see https://pdos.csail.mit.edu/6.828/).
-Then run "make TOOLPREFIX=i386-jos-elf-". Now install the QEMU PC
-simulator and run "make qemu".
+- **System Call Dispatch (`syscall.c`):**  
+  Modified the syscall dispatcher to check the `traced` flag and print syscall information (name, PID, process name, return value) when tracing is enabled.
+
+- **Syscall Name Mapping:**  
+  Added human-readable syscall names for logging.
+
+- **Shell (`sh.c`):**  
+  Integrated `trace` and `untrace` commands to control tracing from the shell. These commands toggle a global tracing flag that enables/disables syscall tracing for processes spawned by the shell.
+
+### User-Level Program
+
+- **trace.c:**  
+  A user program to test syscall tracing. It demonstrates enabling tracing, running commands with tracing enabled, including for child processes, and disabling tracing.
+
+### Build System
+
+- **Makefile:**  
+  Added `trace` to the list of user programs to be compiled and included in the xv6 image.
+
+---
+
+## How to Use
+
+1. **Build and Run:**  
+   Build xv6 with the modified source and run it in QEMU or your preferred emulator.
+
+2. **Enable Tracing:**  
+   From the xv6 shell, type:
+to enable syscall tracing.
+
+3. **Run Commands:**  
+Any subsequent commands you run will have their syscalls logged.
+
+4. **Disable Tracing:**  
+To stop tracing, type:
+
+5. **Use the `trace` program:**  
+You can also run the `trace` user program to see examples of syscall tracing in action.
+
+---
+
+## Example Output
+
+Each syscall traced is logged with:
+
+- **PID:** Process ID of the calling process
+- **Process Name:** Name of the program
+- **Syscall Name:** The syscall invoked
+- **Return Value:** Result returned by the syscall
+
+Example:
+
+---
+
+## Testing
+
+- Successfully tested on xv6 running in QEMU.
+- Verified correct syscall logging for common commands (`echo`, `cat`, `rm`, `sh`).
+- Verified tracing toggles correctly with `trace` and `untrace` commands.
+- Confirmed tracing propagates to child processes when enabled.
+
+---
+
+## Files Modified / Added
+
+- `proc.h` — Added `traced` flag to `struct proc`
+- `syscall.h`, `syscall.c`, `defs.h` — Added `trace` syscall and logging enhancements
+- `sh.c` — Added `trace` and `untrace` shell commands
+- `user/trace.c` — User program to test tracing functionality
+- `Makefile` — Added `trace` to user programs list
+
+---
+
+## Acknowledgements
+
+This project was developed as part of an operating systems course assignment to implement syscall tracing in xv6.
+
+---
+
+Feel free to reach out if you have questions or want to contribute!
