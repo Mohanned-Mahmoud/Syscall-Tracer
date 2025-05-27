@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "trace.h"
 
 struct {
   struct spinlock lock;
@@ -25,6 +26,7 @@ pinit(void)
 {
   initlock(&ptable.lock, "ptable");
 }
+
 
 // Must be called with interrupts disabled
 int
@@ -70,6 +72,7 @@ myproc(void) {
 // If found, change state to EMBRYO and initialize
 // state required to run in the kernel.
 // Otherwise return 0.
+
 static struct proc*
 allocproc(void)
 {
@@ -86,7 +89,9 @@ allocproc(void)
   return 0;
 
 found:
+  
   p->state = EMBRYO;
+  p->traced = T_UNTRACE;
   p->pid = nextpid++;
 
   release(&ptable.lock);
@@ -196,6 +201,7 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+  np->traced = (curproc->traced & T_ONFORK) ? curproc->traced : T_UNTRACE;
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;

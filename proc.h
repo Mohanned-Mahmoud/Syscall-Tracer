@@ -1,3 +1,7 @@
+typedef unsigned int uint;
+typedef unsigned short ushort;
+typedef unsigned char uchar;
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -36,6 +40,7 @@ enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
 // Per-process state
 struct proc {
+
   uint sz;                     // Size of process memory (bytes)
   pde_t* pgdir;                // Page table
   char *kstack;                // Bottom of kernel stack for this process
@@ -49,6 +54,9 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  
+  //this flag will track if syscall tracing is enabled for the process, the default value is 0 (there is no tracing)
+  int traced;            // flag: 1 if syscall tracing is enabled, else 0
 };
 
 // Process memory is laid out contiguously, low addresses first:

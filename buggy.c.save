@@ -1,0 +1,17 @@
+#include "k#include "kernel/types.h"
+#include "user/user.h"
+
+int main() {
+    int *p = 0;  // NULL pointer
+    printf("Accessing NULL pointer...\n");
+    printf("%d\n", *p);  // This will crash the program
+    exit(0);
+ernel/types.h"
+#include "user/user.h"
+
+int main() {
+	int *p = 0;
+	printf("Accessing NULL pointer... \n");
+	printf("%d\n", *p);
+	exit();
+}
